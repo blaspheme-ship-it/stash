@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { ClipboardEventHandler, useMemo, useState } from "react";
 import {
   OnChangeValue,
   StylesConfig,
@@ -28,6 +28,7 @@ interface ISelectProps<T, IsMulti extends boolean>
   showDropdown?: boolean;
   groupHeader?: string;
   noOptionsMessageText?: string | null;
+  onPaste: ClipboardEventHandler<HTMLDivElement>;
 }
 
 interface IFilterSelectProps<T, IsMulti extends boolean>
@@ -53,6 +54,10 @@ const getSelectedItems = <T,>(
   }
 };
 
+const getPastedItems = <T,>(items: string[]) => {
+  return items.map((item) => item.trim());
+};
+
 const SelectComponent = <T, IsMulti extends boolean>(
   props: ISelectProps<T, IsMulti>
 ) => {
@@ -64,6 +69,7 @@ const SelectComponent = <T, IsMulti extends boolean>(
     components,
     placeholder,
     showDropdown = true,
+    onPaste,
     noOptionsMessageText: noOptionsMessage = "None",
   } = props;
 
@@ -101,18 +107,23 @@ const SelectComponent = <T, IsMulti extends boolean>(
   };
 
   return creatable ? (
-    <AsyncCreatableSelect
-      {...componentProps}
-      isDisabled={isLoading || isDisabled}
-    />
+    <div onPaste={onPaste}>
+      <AsyncCreatableSelect
+        {...componentProps}
+        isDisabled={isLoading || isDisabled}
+      />
+    </div>
   ) : (
-    <AsyncSelect {...componentProps} />
+    <div>
+      <AsyncSelect {...componentProps} />
+    </div>
   );
 };
 
 export interface IFilterValueProps<T> {
   values?: T[];
   onSelect?: (item: T[]) => void;
+  onPaste?: (item: T[]) => void;
 }
 
 export interface IFilterProps {
@@ -176,8 +187,20 @@ export const FilterSelectComponent = <
 
   const onChange = (selectedItems: OnChangeValue<Option<T>, boolean>) => {
     const selected = getSelectedItems(selectedItems);
+    console.log("selected: ", selected);
 
     onSelect?.(selected.map((item) => item.object));
+  };
+
+  const onPaste = (event: ClipboardEvent) => {
+    const pastedText = event.clipboardData?.getData("text");
+
+    if (pastedText) {
+      const items = pastedText.split(";").map((item) => item.trim());
+      const newItems = getPastedItems(items);
+      onPaste?.(newItems);
+      return;
+    }
   };
 
   const onCreate =
@@ -245,6 +268,7 @@ export const FilterSelectComponent = <
   return (
     <SelectComponent<T, IsMulti>
       {...props}
+      onPaste={onPaste}
       loadOptions={debounceLoadOptions}
       isLoading={props.isLoading || loading}
       onChange={onChange}
