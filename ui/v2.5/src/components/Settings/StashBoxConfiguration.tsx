@@ -16,6 +16,7 @@ export const StashBoxModal: React.FC<IStashBoxModal> = ({ value, close }) => {
   const intl = useIntl();
   const endpoint = useRef<HTMLInputElement | null>(null);
   const apiKey = useRef<HTMLInputElement | null>(null);
+  const rateLimit = useRef<HTMLInputElement | null>(null);
 
   const [validate, { data, loading }] = GQL.useValidateStashBoxLazyQuery({
     fetchPolicy: "network-only",
@@ -139,7 +140,7 @@ export const StashBoxModal: React.FC<IStashBoxModal> = ({ value, close }) => {
                   max_requests_per_minute: parseInt(e.currentTarget.value),
                 })
               }
-              ref={apiKey}
+              ref={rateLimit}
             />
             <div className="sub-heading">
               <FormattedMessage
